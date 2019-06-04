@@ -517,16 +517,19 @@ public class DatadogUtilities {
   public static JSONArray assembleTags(final JSONObject builddata, final Map<String,String> extra) {
     JSONArray tags = new JSONArray();
 
-    tags.add("job:" + builddata.get("job"));
+    if( DatadogUtilities.getDatadogDescriptor().getTagJob() ){
+        tags.add("job:" + builddata.get("job"));
+    }
+
     if ( (builddata.get("node") != null) && DatadogUtilities.getDatadogDescriptor().getTagNode() ) {
       tags.add("node:" + builddata.get("node"));
     }
 
-    if ( builddata.get("result") != null ) {
+    if ( (builddata.get("result") != null) && DatadogUtilities.getDatadogDescriptor().getTagResult() ) {
       tags.add("result:" + builddata.get("result"));
     }
 
-    if ( builddata.get("branch") != null && !extra.containsKey("branch") ) {
+    if ( (builddata.get("branch") != null) && !extra.containsKey("branch") && DatadogUtilities.getDatadogDescriptor().getTagBranch() ) {
       tags.add("branch:" + builddata.get("branch"));
     }
 

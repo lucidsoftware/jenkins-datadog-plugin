@@ -481,7 +481,10 @@ public class DatadogBuildListener extends RunListener<Run>
     private String blacklist = null;
     private String whitelist = null;
     private String globalJobTags = null;
+    private Boolean tagJob = true;
     private Boolean tagNode = false;
+    private Boolean tagResult = true;
+    private Boolean tagBranch = true;
     private String daemonHost = "localhost:8125";
     private String targetMetricURL = "https://api.datadoghq.com/api/";
     //The StatsDClient instance variable. This variable is leased by the RunLIstener
@@ -664,11 +667,32 @@ public class DatadogBuildListener extends RunListener<Run>
       // Grab the Global Job Tags
       this.setGlobalJobTags(formData.getString("globalJobTags"));
 
+      // Grab tagJob and coerse to a boolean
+      if ( formData.getString("tagJob").equals("true") ) {
+        this.setTagJob(true);
+      } else {
+        this.setTagJob(false);
+      }
+
       // Grab tagNode and coerse to a boolean
       if ( formData.getString("tagNode").equals("true") ) {
         this.setTagNode(true);
       } else {
         this.setTagNode(false);
+      }
+
+      // Grab tagResult and coerse to a boolean
+      if ( formData.getString("tagResult").equals("true") ) {
+        this.setTagResult(true);
+      } else {
+        this.setTagResult(false);
+      }
+
+      // Grab tagBranch and coerse to a boolean
+      if ( formData.getString("tagBranch").equals("true") ) {
+        this.setTagBranch(true);
+      } else {
+        this.setTagBranch(false);
       }
 
       daemonHost = formData.getString("daemonHost");
@@ -793,6 +817,26 @@ public class DatadogBuildListener extends RunListener<Run>
     }
 
     /**
+     * Getter function for the optional tag {@link tagJob} global configuration.
+     *
+     * @return a Boolean containing optional tag value for the {@link tagJob}
+     *     global configuration.
+     */
+    public Boolean getTagJob() {
+      return tagJob;
+    }
+
+    /**
+     * Setter function for the optional tag {@link tagJob} global configuration.
+     *
+     * @param willTag - A Boolean expressing whether the {@link tagJob} tag will
+     *     be included.
+     */
+    public void setTagJob(final Boolean willTag) {
+      this.tagJob = willTag;
+    }
+
+    /**
      * Getter function for the optional tag {@link tagNode} global configuration.
      *
      * @return a Boolean containing optional tag value for the {@link tagNode}
@@ -810,6 +854,46 @@ public class DatadogBuildListener extends RunListener<Run>
      */
     public void setTagNode(final Boolean willTag) {
       this.tagNode = willTag;
+    }
+
+    /**
+     * Getter function for the optional tag {@link tagResult} global configuration.
+     *
+     * @return a Boolean containing optional tag value for the {@link tagResult}
+     *     global configuration.
+     */
+    public Boolean getTagResult() {
+      return tagResult;
+    }
+
+    /**
+     * Setter function for the optional tag {@link tagResult} global configuration.
+     *
+     * @param willTag - A Boolean expressing whether the {@link tagResult} tag will
+     *     be included.
+     */
+    public void setTagResult(final Boolean willTag) {
+      this.tagResult = willTag;
+    }
+
+    /**
+     * Getter function for the optional tag {@link tagBranch} global configuration.
+     *
+     * @return a Boolean containing optional tag value for the {@link tagBranch}
+     *     global configuration.
+     */
+    public Boolean getTagBranch() {
+      return tagBranch;
+    }
+
+    /**
+     * Setter function for the optional tag {@link tagBranch} global configuration.
+     *
+     * @param willTag - A Boolean expressing whether the {@link tagBranch} tag will
+     *     be included.
+     */
+    public void setTagBranch(final Boolean willTag) {
+      this.tagBranch = willTag;
     }
 
     /**
