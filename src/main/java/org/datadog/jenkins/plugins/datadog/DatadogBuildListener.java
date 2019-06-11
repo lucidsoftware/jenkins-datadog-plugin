@@ -3,6 +3,12 @@ package org.datadog.jenkins.plugins.datadog;
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.StatsDClient;
 import com.timgroup.statsd.StatsDClientException;
+import com.amazonaws.SdkClientException;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehose;
+import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehoseClientBuilder;
+import com.amazonaws.services.kinesisfirehose.model.PutRecordRequest;
+import com.amazonaws.services.kinesisfirehose.model.Record;
 import static hudson.Util.fixEmptyAndTrim;
 
 import hudson.EnvVars;
@@ -30,17 +36,24 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.StringEscapeUtils;
 
 /**
  * DatadogBuildListener {@link RunListener}.
@@ -245,6 +258,16 @@ public class DatadogBuildListener extends RunListener<Run>
       } else {
         logger.warning("Invalid dogstats daemon host specificed");
       }
+      AmazonKinesisFirehose firehose = AmazonKinesisFirehoseClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
+      String snowflakedata = gatherSnowflakeData(run, builddata, listener);
+      byte[] bytes = snowflakedata.getBytes(StandardCharsets.UTF_8);
+      Record record = new Record().withData(ByteBuffer.wrap(bytes));
+      PutRecordRequest request = new PutRecordRequest().withDeliveryStreamName("jenkins-build-results").withRecord(record);
+      try {
+        firehose.putRecord(request);
+      } catch (SdkClientException e) {
+         logger.severe(e.getMessage());
+      }
       logger.fine("Finished onCompleted()");
     }
   }
@@ -265,6 +288,7 @@ public class DatadogBuildListener extends RunListener<Run>
     }
     return 0;
   }
+      //get start time, end time, result, duration, waiting, branch name, build name, build number
 
   private long getMeanTimeToRecovery(Run<?, ?> run) {
     if (buildFailed(run.getPreviousBuiltBuild())) {
@@ -324,6 +348,51 @@ public class DatadogBuildListener extends RunListener<Run>
     }
 
     return builddata;
+  }
+
+  /**
+   * Returns a string containing the data we need to send to Snowflake. 
+   * @param run - A Run object representing a particular execution of Job.
+   * @param builddata - A JSONObject containing a builds metadata.
+   * @param listener - A TaskListener object which receives events that happen during some
+   *                   operation.
+   * @return a String containing information formatted for Snowflake
+   */
+  private String gatherSnowflakeData(final Run run, JSONObject builddata, @Nonnull final TaskListener listener) {
+    ArrayList<String> snowflakelist = new ArrayList<String>();
+    snowflakelist.add(builddata.get("starttime").toString());
+    snowflakelist.add(builddata.get("timestamp").toString());
+    snowflakelist.add(run.getResult().toString());
+    snowflakelist.add(Long.toString(Math.round(duration(run))));
+    Queue.Item item = queue.getItem(run.getQueueId());
+    snowflakelist.add(Long.toString((run.getStartTimeInMillis() - item.getInQueueSince()) / DatadogBuildListener.THOUSAND_LONG));
+    try {
+      EnvVars envVars = run.getEnvironment(listener);
+      if ( envVars.get("GIT_BRANCH") != null ) {
+        snowflakelist.add(envVars.get("GIT_BRANCH").toString());
+      } else if ( envVars.get("CVS_BRANCH") != null ) {
+        snowflakelist.add(envVars.get("CVS_BRANCH").toString());
+      } else {
+        snowflakelist.add("");
+      }
+    } catch (IOException e) {
+      logger.severe(e.getMessage());
+    } catch (InterruptedException e) {
+      logger.severe(e.getMessage());
+    }
+    String jobName = DatadogUtilities.normalizeFullDisplayName(run.getParent().getFullName());
+    String pattern = "main/.*?/(.*)";
+    Pattern r = Pattern.compile(pattern);
+    Matcher m = r.matcher(jobName);
+    if ( m.find() ) {
+      snowflakelist.add(m.group(1));
+    } else {
+      snowflakelist.add(jobName);
+    }
+    snowflakelist.add(builddata.get("number").toString());
+
+    String snowflakedata = StringUtils.join(snowflakelist, Character.toString(Character.MIN_VALUE)) + "\n";
+    return snowflakedata;
   }
 
   /**

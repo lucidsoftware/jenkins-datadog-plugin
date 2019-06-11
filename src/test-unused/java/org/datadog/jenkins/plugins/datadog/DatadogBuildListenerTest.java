@@ -23,8 +23,8 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
-@RunWith(PowerMockRunner.class)
 @PrepareForTest({DatadogHttpRequests.class, DatadogUtilities.class, Jenkins.class})
+@RunWith(PowerMockRunner.class)
 public class DatadogBuildListenerTest {
     @Mock
     private Jenkins jenkins;
