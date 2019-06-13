@@ -365,7 +365,12 @@ public class DatadogBuildListener extends RunListener<Run>
     snowflakelist.add(run.getResult().toString());
     snowflakelist.add(Long.toString(Math.round(duration(run))));
     Queue.Item item = queue.getItem(run.getQueueId());
-    snowflakelist.add(Long.toString((run.getStartTimeInMillis() - item.getInQueueSince()) / DatadogBuildListener.THOUSAND_LONG));
+    if ( item != null ) {
+      snowflakelist.add(Long.toString((run.getStartTimeInMillis() - item.getInQueueSince()) / DatadogBuildListener.THOUSAND_LONG));
+    } else {
+      logger.warning("Unable to compute 'waiting' metric for Snowflake. item.getInQueueSince() unavailable, possibly due to worker instance provisioning");
+      snowflakelist.add("");
+    }
     try {
       EnvVars envVars = run.getEnvironment(listener);
       if ( envVars.get("GIT_BRANCH") != null ) {
