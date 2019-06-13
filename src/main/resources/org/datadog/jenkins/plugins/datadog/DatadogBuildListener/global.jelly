@@ -35,11 +35,14 @@
               description="A list of job names, regex or literal, followed by a list of tags to apply globally for those jobs." >
       <f:textarea field="globalJobTags" optional="true" default="${globalJobTags}" />
     </f:entry>
-    <f:entry title="Optional Tags" field="optionalTags" description="Snowflake toggle coming soon!">
+    <f:entry title="Optional Tags" field="optionalTags">
       <f:checkbox title="job" field="tagJob" optional="true" />
       <f:checkbox title="node" field="tagNode" optional="true" />
       <f:checkbox title="result" field="tagResult" optional="true" />
       <f:checkbox title="branch" field="tagBranch" optional="true" />
+    </f:entry>
+    <f:entry title="Snowflake Data" field="snowflakeData" description="Send data to Snowflake">
+      <f:checkbox title="snowflake" field="sendSnowflake" optional="true" />
     </f:entry>
     <f:advanced>
         <f:entry title="DogStatsD Host" field="daemonHost">

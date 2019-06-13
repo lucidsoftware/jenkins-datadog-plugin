@@ -258,15 +258,17 @@ public class DatadogBuildListener extends RunListener<Run>
       } else {
         logger.warning("Invalid dogstats daemon host specificed");
       }
-      AmazonKinesisFirehose firehose = AmazonKinesisFirehoseClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
-      String snowflakedata = gatherSnowflakeData(run, builddata, listener);
-      byte[] bytes = snowflakedata.getBytes(StandardCharsets.UTF_8);
-      Record record = new Record().withData(ByteBuffer.wrap(bytes));
-      PutRecordRequest request = new PutRecordRequest().withDeliveryStreamName("jenkins-build-results").withRecord(record);
-      try {
-        firehose.putRecord(request);
-      } catch (SdkClientException e) {
-         logger.severe(e.getMessage());
+      if ( DatadogUtilities.getDatadogDescriptor().getSendSnowflake() ) {
+          AmazonKinesisFirehose firehose = AmazonKinesisFirehoseClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
+          String snowflakedata = gatherSnowflakeData(run, builddata, listener);
+          byte[] bytes = snowflakedata.getBytes(StandardCharsets.UTF_8);
+          Record record = new Record().withData(ByteBuffer.wrap(bytes));
+          PutRecordRequest request = new PutRecordRequest().withDeliveryStreamName("jenkins-build-results").withRecord(record);
+          try {
+            firehose.putRecord(request);
+          } catch (SdkClientException e) {
+            logger.severe(e.getMessage());
+          }
       }
       logger.fine("Finished onCompleted()");
     }
@@ -559,6 +561,7 @@ public class DatadogBuildListener extends RunListener<Run>
     private Boolean tagNode = false;
     private Boolean tagResult = true;
     private Boolean tagBranch = true;
+    private Boolean sendSnowflake = false;
     private String daemonHost = "localhost:8125";
     private String targetMetricURL = "https://api.datadoghq.com/api/";
     //The StatsDClient instance variable. This variable is leased by the RunLIstener
@@ -769,6 +772,13 @@ public class DatadogBuildListener extends RunListener<Run>
         this.setTagBranch(false);
       }
 
+      // Grab sendSnowflake and coerse to a boolean
+      if ( formData.getString("sendSnowflake").equals("true") ) {
+        this.setSendSnowflake(true);
+      } else {
+        this.setSendSnowflake(false);
+      }
+
       daemonHost = formData.getString("daemonHost");
       //When form is saved...reinitialize the StatsDClient.
       //We need to stop the old one first. And create a new one with the new data from
@@ -968,6 +978,26 @@ public class DatadogBuildListener extends RunListener<Run>
      */
     public void setTagBranch(final Boolean willTag) {
       this.tagBranch = willTag;
+    }
+
+    /**
+     * Getter function for the optional {@link sendSnowflake} global configuration.
+     *
+     * @return a Boolean containing optional value for the {@link sendSnowflake}
+     *     global configuration.
+     */
+    public Boolean getSendSnowflake() {
+      return sendSnowflake;
+    }
+
+    /**
+     * Setter function for the optional {@link sendSnowflake} global configuration.
+     *
+     * @param willSend - A Boolean expressing whether the {@link sendSnowflake} data will
+     *     be included.
+     */
+    public void setSendSnowflake(final Boolean willSend) {
+      this.sendSnowflake = willSend;
     }
 
     /**
