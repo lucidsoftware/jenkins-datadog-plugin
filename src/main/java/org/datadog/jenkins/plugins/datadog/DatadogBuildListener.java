@@ -398,7 +398,7 @@ public class DatadogBuildListener extends RunListener<Run>
     }
     snowflakelist.add(builddata.get("number").toString());
 
-    String snowflakedata = StringUtils.join(snowflakelist, Character.toString(Character.MIN_VALUE)) + "\n";
+    String snowflakedata = StringUtils.join(snowflakelist, (char) 1) + "\n";
     return snowflakedata;
   }
 
