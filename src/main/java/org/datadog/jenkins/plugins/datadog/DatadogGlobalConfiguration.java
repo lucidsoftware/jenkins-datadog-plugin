@@ -86,6 +86,7 @@ public class DatadogGlobalConfiguration extends GlobalConfiguration {
     private Boolean tagJob = true;
     private Boolean tagResult = true;
     private Boolean tagBranch = true;
+    private Boolean sendSnowflake = true;
     private boolean emitSecurityEvents = true;
     private boolean emitSystemEvents = true;
 
@@ -285,6 +286,7 @@ public class DatadogGlobalConfiguration extends GlobalConfiguration {
             this.setTagJob(formData.getString("tagJob").equals("true"));
             this.setTagResult(formData.getString("tagJob").equals("true"));
             this.setTagBranch(formData.getString("tagJob").equals("true"));
+            this.setSendSnowflake(formData.getString("sendSnowflake").equals("true"));
             this.setEmitSecurityEvents(formData.getBoolean("emitSecurityEvents"));
             this.setEmitSystemEvents(formData.getBoolean("emitSystemEvents"));
 
@@ -582,6 +584,26 @@ public class DatadogGlobalConfiguration extends GlobalConfiguration {
      */
     public void setTagBranch(final Boolean willTag) {
         this.tagBranch = willTag;
+    }
+
+    /**
+     * Getter function for the optional {@link sendSnowflake} global configuration.
+     *
+     * @return a Boolean containing optional value for the {@link sendSnowflake}
+     *     global configuration.
+     */
+    public Boolean getSendSnowflake() {
+        return sendSnowflake;
+    }
+
+    /**
+     * Setter function for the optional {@link sendSnowflake} global configuration.
+     *
+     * @param willSend - A Boolean expressing whether the {@link sendSnowflake} data will
+     *     be included.
+     */
+    public void setSendSnowflake(final Boolean willSend) {
+        this.sendSnowflake = willSend;
     }
 
     /**

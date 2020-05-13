@@ -25,6 +25,14 @@ THE SOFTWARE.
 
 package org.datadog.jenkins.plugins.datadog.listeners;
 
+import com.amazonaws.SdkClientException;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehose;
+import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehoseClientBuilder;
+import com.amazonaws.services.kinesisfirehose.model.PutRecordRequest;
+import com.amazonaws.services.kinesisfirehose.model.Record;
+
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.model.*;
 import hudson.model.listeners.RunListener;
@@ -43,6 +51,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang.StringUtils;
 
 /**
  * This class registers an {@link RunListener} to trigger events and calculate metrics:
@@ -188,6 +203,19 @@ public class DatadogBuildListener extends RunListener<Run>  {
                 }
             }
 
+            if ( DatadogUtilities.getDatadogGlobalDescriptor().getSendSnowflake() ) {
+                try {
+                    AmazonKinesisFirehose firehose = AmazonKinesisFirehoseClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
+                    String snowflakedata = gatherSnowflakeData(run, buildData, listener);
+                    byte[] bytes = snowflakedata.getBytes(StandardCharsets.UTF_8);
+                    Record record = new Record().withData(ByteBuffer.wrap(bytes));
+                    PutRecordRequest request = new PutRecordRequest().withDeliveryStreamName("jenkins-build-results").withRecord(record);
+                    firehose.putRecord(request);
+                    logger.fine("Sent snowflake data");
+                } catch (Exception e) {
+                    logger.severe(e.getMessage());
+                }
+            }
             logger.fine("End DatadogBuildListener#onCompleted");
         } catch (Exception e) {
             DatadogUtilities.severe(logger, e, "An unexpected error occurred: ");
@@ -277,5 +305,56 @@ public class DatadogBuildListener extends RunListener<Run>  {
 
     public DatadogClient getDatadogClient(){
         return ClientFactory.getClient();
+    }
+
+    /**
+     * Returns a string containing the data we need to send to Snowflake. 
+     * @param run - A Run object representing a particular execution of Job.
+     * @param buildData - A JSONObject containing a builds metadata.
+     * @param listener - A TaskListener object which receives events that happen during some
+     *                   operation.
+     * @return a String containing information formatted for Snowflake
+     */
+    private String gatherSnowflakeData(final Run run, BuildData buildData, @Nonnull final TaskListener listener) {
+        ArrayList<String> snowflakelist = new ArrayList<String>();
+        snowflakelist.add(Long.toString(buildData.getStartTime(0L) / 1000));
+        snowflakelist.add(Long.toString(buildData.getEndTime(0L) / 1000));
+        snowflakelist.add(buildData.getResult("").toString());
+        snowflakelist.add(Long.toString(buildData.getDuration(0L) / 1000));
+        Queue queue = Queue.getInstance();
+        Queue.Item item = queue.getItem(run.getQueueId());
+        if ( item != null ) {
+            snowflakelist.add(Long.toString((run.getStartTimeInMillis() - item.getInQueueSince()) / 1000L));
+        } else {
+            logger.warning("Unable to compute 'waiting' metric for Snowflake. item.getInQueueSince() unavailable, possibly due to worker instance provisioning");
+            snowflakelist.add("");
+        }
+        try {
+            EnvVars envVars = run.getEnvironment(listener);
+            if ( envVars.get("GIT_BRANCH") != null ) {
+                snowflakelist.add(envVars.get("GIT_BRANCH").toString());
+            } else if ( envVars.get("CVS_BRANCH") != null ) {
+                snowflakelist.add(envVars.get("CVS_BRANCH").toString());
+            } else {
+                snowflakelist.add("");
+            }
+        } catch (IOException e) {
+            logger.severe(e.getMessage());
+        } catch (InterruptedException e) {
+            logger.severe(e.getMessage());
+        }
+        String jobName = run.getParent().getFullName().replaceAll("»", "/").replaceAll(" ", "");;
+        String pattern = "main/.*?/(.*)";
+        Pattern r = Pattern.compile(pattern);
+        Matcher m = r.matcher(jobName);
+        if ( m.find() ) {
+            snowflakelist.add(m.group(1));
+        } else {
+            snowflakelist.add(jobName);
+        }
+        snowflakelist.add(buildData.getBuildNumber("").toString());
+
+        String snowflakedata = StringUtils.join(snowflakelist, (char) 1) + "\n";
+        return snowflakedata;
     }
 }

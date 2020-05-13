@@ -403,4 +403,51 @@ public class DatadogHttpClient implements DatadogClient {
         return conn;
     }
 
+    public Boolean postToSnowflake(final JSONObject payload, final String type) throws IOException {
+        String urlParameters = "?api_key=" + Secret.toString(getApiKey());
+        HttpURLConnection conn = null;
+        try {
+            logger.finer("Setting up HttpURLConnection...");
+            conn = getHttpURLConnection(new URL(getUrl() + type + urlParameters));
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setUseCaches(false);
+            conn.setDoInput(true);
+            conn.setDoOutput(true);
+            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream(), "utf-8");
+            logger.finer("Writing to OutputStreamWriter...");
+            wr.write(payload.toString());
+            wr.close();
+            BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"));
+            StringBuilder result = new StringBuilder();
+            String line;
+            while ((line = rd.readLine()) != null) {
+                result.append(line);
+            }
+            rd.close();
+            JSONObject json = (JSONObject) JSONSerializer.toJSON(result.toString());
+            if ("ok".equals(json.getString("status"))) {
+                logger.finer(String.format("API call of type '%s' was sent successfully!", type));
+                logger.finer(String.format("Payload: %s", payload));
+                return true;
+            } else {
+                logger.fine(String.format("API call of type '%s' failed!", type));
+                logger.fine(String.format("Payload: %s", payload));
+                return false;
+            }
+        } catch (Exception e) {
+            if (conn.getResponseCode() == DatadogHttpClient.HTTP_FORBIDDEN) {
+                logger.severe("Hmmm, your API key may be invalid. We received a 403 error.");
+            } else {
+                logger.severe(String.format("Client error: %s", e.toString()));
+            }
+            return false;
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+            return true;
+        }
+    }
+
 }

@@ -79,6 +79,11 @@
           <f:checkbox title="branch" field="tagBranch" optional="true" />
         </f:entry>
 
+
+        <f:entry title="Snowflake Data" field="snowflakeData" description="Send data to Snowflake">
+          <f:checkbox title="snowflake" field="sendSnowflake" optional="true" />
+        </f:entry>
+
         <f:entry description="Send security events like login, logout, login failure, configuration changes to jobs or changes to jenkins.">
             <f:checkbox title="Send Security audit events" field="emitSecurityEvents" default="true"/>
         </f:entry>
