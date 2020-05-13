@@ -83,6 +83,9 @@ public class DatadogGlobalConfiguration extends GlobalConfiguration {
     private String globalTagFile = null;
     private String globalTags = null;
     private String globalJobTags = null;
+    private Boolean tagJob = true;
+    private Boolean tagResult = true;
+    private Boolean tagBranch = true;
     private boolean emitSecurityEvents = true;
     private boolean emitSystemEvents = true;
 
@@ -279,6 +282,9 @@ public class DatadogGlobalConfiguration extends GlobalConfiguration {
             this.setGlobalTagFile(formData.getString("globalTagFile"));
             this.setGlobalTags(formData.getString("globalTags"));
             this.setGlobalJobTags(formData.getString("globalJobTags"));
+            this.setTagJob(formData.getString("tagJob").equals("true"));
+            this.setTagResult(formData.getString("tagJob").equals("true"));
+            this.setTagBranch(formData.getString("tagJob").equals("true"));
             this.setEmitSecurityEvents(formData.getBoolean("emitSecurityEvents"));
             this.setEmitSystemEvents(formData.getBoolean("emitSystemEvents"));
 
@@ -516,6 +522,66 @@ public class DatadogGlobalConfiguration extends GlobalConfiguration {
     @DataBoundSetter
     public void setGlobalJobTags(String globalJobTags) {
         this.globalJobTags = globalJobTags;
+    }
+
+    /**
+     * Getter function for the optional tag {@link tagJob} global configuration.
+     *
+     * @return a Boolean containing optional tag value for the {@link tagJob}
+     *     global configuration.
+     */
+    public boolean getTagJob() {
+        return tagJob;
+    }
+
+    /**
+     * Setter function for the optional tag {@link tagJob} global configuration.
+     *
+     * @param willTag - A Boolean expressing whether the {@link tagJob} tag will
+     *     be included.
+     */
+    public void setTagJob(final boolean willTag) {
+        this.tagJob = willTag;
+    }
+
+    /**
+     * Getter function for the optional tag {@link tagResult} global configuration.
+     *
+     * @return a Boolean containing optional tag value for the {@link tagResult}
+     *     global configuration.
+     */
+    public Boolean getTagResult() {
+        return tagResult;
+    }
+
+    /**
+     * Setter function for the optional tag {@link tagResult} global configuration.
+     *
+     * @param willTag - A Boolean expressing whether the {@link tagResult} tag will
+     *     be included.
+     */
+    public void setTagResult(final Boolean willTag) {
+        this.tagResult = willTag;
+    }
+
+    /**
+     * Getter function for the optional tag {@link tagBranch} global configuration.
+     *
+     * @return a Boolean containing optional tag value for the {@link tagBranch}
+     *     global configuration.
+     */
+    public Boolean getTagBranch() {
+        return tagBranch;
+    }
+
+    /**
+     * Setter function for the optional tag {@link tagBranch} global configuration.
+     *
+     * @param willTag - A Boolean expressing whether the {@link tagBranch} tag will
+     *     be included.
+     */
+    public void setTagBranch(final Boolean willTag) {
+        this.tagBranch = willTag;
     }
 
     /**

@@ -169,20 +169,24 @@ public class BuildData {
         }
         mergedTags = TagsUtil.merge(mergedTags, tags);
         Map<String, Set<String>> additionalTags = new HashMap<>();
-        Set<String> jobValues = new HashSet<>();
-        jobValues.add(getJobName("unknown"));
-        additionalTags.put("job", jobValues);
+
+        if (DatadogUtilities.getDatadogGlobalDescriptor().getTagJob()) {
+            Set<String> jobValues = new HashSet<>();
+            jobValues.add(getJobName("unknown"));
+            additionalTags.put("job", jobValues);
+        }
+
         if (nodeName != null) {
             Set<String> nodeValues = new HashSet<>();
             nodeValues.add(getNodeName("unknown"));
             additionalTags.put("node", nodeValues);
         }
-        if (result != null) {
+        if (result != null && DatadogUtilities.getDatadogGlobalDescriptor().getTagResult()) {
             Set<String> resultValues = new HashSet<>();
             resultValues.add(getResult("UNKNOWN"));
             additionalTags.put("result", resultValues);
         }
-        if (branch != null) {
+        if (branch != null && DatadogUtilities.getDatadogGlobalDescriptor().getTagBranch()) {
             Set<String> branchValues = new HashSet<>();
             branchValues.add(getBranch("unknown"));
             additionalTags.put("branch", branchValues);
