@@ -29,6 +29,8 @@ import hudson.EnvVars;
 import hudson.model.*;
 import hudson.triggers.SCMTrigger;
 import hudson.triggers.TimerTrigger;
+
+import org.datadog.jenkins.plugins.datadog.DatadogGlobalConfiguration;
 import org.datadog.jenkins.plugins.datadog.DatadogUtilities;
 import org.datadog.jenkins.plugins.datadog.util.SuppressFBWarnings;
 import org.datadog.jenkins.plugins.datadog.util.TagsUtil;
@@ -170,7 +172,17 @@ public class BuildData {
         mergedTags = TagsUtil.merge(mergedTags, tags);
         Map<String, Set<String>> additionalTags = new HashMap<>();
 
-        if (DatadogUtilities.getDatadogGlobalDescriptor().getTagJob()) {
+        boolean tagJob = true;
+        boolean tagResult = true;
+        boolean tagBranch = true;
+        DatadogGlobalConfiguration dgc = DatadogUtilities.getDatadogGlobalDescriptor();
+        if (dgc != null) {
+            tagJob = dgc.getTagJob();
+            tagResult = dgc.getTagResult();
+            tagBranch = dgc.getTagBranch();
+        }
+
+        if (tagJob) {
             Set<String> jobValues = new HashSet<>();
             jobValues.add(getJobName("unknown"));
             additionalTags.put("job", jobValues);
@@ -181,12 +193,12 @@ public class BuildData {
             nodeValues.add(getNodeName("unknown"));
             additionalTags.put("node", nodeValues);
         }
-        if (result != null && DatadogUtilities.getDatadogGlobalDescriptor().getTagResult()) {
+        if (result != null && tagResult) {
             Set<String> resultValues = new HashSet<>();
             resultValues.add(getResult("UNKNOWN"));
             additionalTags.put("result", resultValues);
         }
-        if (branch != null && DatadogUtilities.getDatadogGlobalDescriptor().getTagBranch()) {
+        if (branch != null && tagBranch) {
             Set<String> branchValues = new HashSet<>();
             branchValues.add(getBranch("unknown"));
             additionalTags.put("branch", branchValues);
