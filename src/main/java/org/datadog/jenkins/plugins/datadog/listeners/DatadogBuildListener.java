@@ -331,7 +331,9 @@ public class DatadogBuildListener extends RunListener<Run>  {
         }
         try {
             EnvVars envVars = run.getEnvironment(listener);
-            if ( envVars.get("GIT_BRANCH") != null ) {
+            if ( envVars.get("LUCID_GIT_BRANCH") != null ) {
+                snowflakelist.add(envVars.get("LUCID_GIT_BRANCH").toString());
+            } else if ( envVars.get("GIT_BRANCH") != null ) {
                 snowflakelist.add(envVars.get("GIT_BRANCH").toString());
             } else if ( envVars.get("CVS_BRANCH") != null ) {
                 snowflakelist.add(envVars.get("CVS_BRANCH").toString());
