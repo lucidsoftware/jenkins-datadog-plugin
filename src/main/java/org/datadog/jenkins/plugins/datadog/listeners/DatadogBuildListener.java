@@ -36,6 +36,7 @@ import hudson.EnvVars;
 import hudson.Extension;
 import hudson.model.*;
 import hudson.model.listeners.RunListener;
+import jenkins.metrics.impl.TimeInQueueAction;
 import org.datadog.jenkins.plugins.datadog.DatadogClient;
 import org.datadog.jenkins.plugins.datadog.DatadogEvent;
 import org.datadog.jenkins.plugins.datadog.DatadogUtilities;
@@ -308,7 +309,7 @@ public class DatadogBuildListener extends RunListener<Run>  {
     }
 
     /**
-     * Returns a string containing the data we need to send to Snowflake. 
+     * Returns a string containing the data we need to send to Snowflake.
      * @param run - A Run object representing a particular execution of Job.
      * @param buildData - A JSONObject containing a builds metadata.
      * @param listener - A TaskListener object which receives events that happen during some
@@ -321,17 +322,18 @@ public class DatadogBuildListener extends RunListener<Run>  {
         snowflakelist.add(Long.toString(buildData.getEndTime(0L) / 1000));
         snowflakelist.add(buildData.getResult("").toString());
         snowflakelist.add(Long.toString(buildData.getDuration(0L) / 1000));
-        Queue queue = Queue.getInstance();
-        Queue.Item item = queue.getItem(run.getQueueId());
-        if ( item != null ) {
-            snowflakelist.add(Long.toString((run.getStartTimeInMillis() - item.getInQueueSince()) / 1000L));
+        TimeInQueueAction action = run.getAction(TimeInQueueAction.class);
+        if ( action != null ) {
+            snowflakelist.add(Long.toString(action.getQueuingDurationMillis() / 1000L));
         } else {
-            logger.warning("Unable to compute 'waiting' metric for Snowflake. item.getInQueueSince() unavailable, possibly due to worker instance provisioning");
+            logger.warning("Unable to compute 'waiting' metric for Snowflake. TimeInQueueAction unavailable.");
             snowflakelist.add("");
         }
         try {
             EnvVars envVars = run.getEnvironment(listener);
-            if ( envVars.get("GIT_BRANCH") != null ) {
+            if ( envVars.get("LUCID_GIT_BRANCH") != null ) {
+                snowflakelist.add(envVars.get("LUCID_GIT_BRANCH").toString());
+            } else if ( envVars.get("GIT_BRANCH") != null ) {
                 snowflakelist.add(envVars.get("GIT_BRANCH").toString());
             } else if ( envVars.get("CVS_BRANCH") != null ) {
                 snowflakelist.add(envVars.get("CVS_BRANCH").toString());
