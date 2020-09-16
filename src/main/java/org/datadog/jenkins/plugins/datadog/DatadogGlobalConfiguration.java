@@ -284,8 +284,8 @@ public class DatadogGlobalConfiguration extends GlobalConfiguration {
             this.setGlobalTags(formData.getString("globalTags"));
             this.setGlobalJobTags(formData.getString("globalJobTags"));
             this.setTagJob(formData.getString("tagJob").equals("true"));
-            this.setTagResult(formData.getString("tagJob").equals("true"));
-            this.setTagBranch(formData.getString("tagJob").equals("true"));
+            this.setTagResult(formData.getString("tagResult").equals("true"));
+            this.setTagBranch(formData.getString("tagBranch").equals("true"));
             this.setSendSnowflake(formData.getString("sendSnowflake").equals("true"));
             this.setEmitSecurityEvents(formData.getBoolean("emitSecurityEvents"));
             this.setEmitSystemEvents(formData.getBoolean("emitSystemEvents"));
