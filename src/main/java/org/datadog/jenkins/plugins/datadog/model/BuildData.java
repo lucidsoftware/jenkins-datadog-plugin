@@ -173,11 +173,13 @@ public class BuildData {
         Map<String, Set<String>> additionalTags = new HashMap<>();
 
         boolean tagJob = true;
+        boolean tagNode = true;
         boolean tagResult = true;
         boolean tagBranch = true;
         DatadogGlobalConfiguration dgc = DatadogUtilities.getDatadogGlobalDescriptor();
         if (dgc != null) {
             tagJob = dgc.getTagJob();
+            tagNode = dgc.getTagNode();
             tagResult = dgc.getTagResult();
             tagBranch = dgc.getTagBranch();
         }
@@ -188,7 +190,7 @@ public class BuildData {
             additionalTags.put("job", jobValues);
         }
 
-        if (nodeName != null) {
+        if (nodeName != null && tagNode) {
             Set<String> nodeValues = new HashSet<>();
             nodeValues.add(getNodeName("unknown"));
             additionalTags.put("node", nodeValues);

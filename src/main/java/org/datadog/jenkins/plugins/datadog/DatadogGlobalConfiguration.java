@@ -84,6 +84,7 @@ public class DatadogGlobalConfiguration extends GlobalConfiguration {
     private String globalTags = null;
     private String globalJobTags = null;
     private Boolean tagJob = true;
+    private Boolean tagNode = true;
     private Boolean tagResult = true;
     private Boolean tagBranch = true;
     private Boolean sendSnowflake = true;
@@ -284,6 +285,7 @@ public class DatadogGlobalConfiguration extends GlobalConfiguration {
             this.setGlobalTags(formData.getString("globalTags"));
             this.setGlobalJobTags(formData.getString("globalJobTags"));
             this.setTagJob(formData.getString("tagJob").equals("true"));
+            this.setTagNode(formData.getString("tagNode").equals("true"));
             this.setTagResult(formData.getString("tagResult").equals("true"));
             this.setTagBranch(formData.getString("tagBranch").equals("true"));
             this.setSendSnowflake(formData.getString("sendSnowflake").equals("true"));
@@ -544,6 +546,14 @@ public class DatadogGlobalConfiguration extends GlobalConfiguration {
      */
     public void setTagJob(final boolean willTag) {
         this.tagJob = willTag;
+    }
+
+    public Boolean getTagNode() {
+        return tagNode;
+    }
+
+    public void setTagNode(final Boolean willTag) {
+        this.tagNode = willTag;
     }
 
     /**

@@ -75,6 +75,7 @@
 
         <f:entry title="Optional Tags" field="optionalTags">
           <f:checkbox title="job" field="tagJob" optional="true" />
+          <f:checkbox title="branch" field="tagNode" optional="true" />
           <f:checkbox title="result" field="tagResult" optional="true" />
           <f:checkbox title="branch" field="tagBranch" optional="true" />
         </f:entry>
